@@ -15,7 +15,7 @@ It will convert them and multiplex the result.
 # How to use it
 Just clone this repo.
 ```
-git clone https://gitea.verbois.ovh/simon-verbois/subtile-converter.git
+git clone https://github.com/simon-verbois/subtitle-converter.git
 ```
 
 Then, change the path in the `docker-compose.yml` file to add your path from where your 
