@@ -1,0 +1,7 @@
+version: '3'
+services:
+  subtitle-converter:
+    container_name: subtitle-converter
+    build: .
+    volumes:
+      - ./data:/data
