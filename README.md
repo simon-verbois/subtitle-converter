@@ -5,7 +5,7 @@ It will convert files of different formats to .SRT, in order to allow the applic
 <br>
 
 # How it works
-The script runs in an Ubuntu docker (light), the dependencies are installed when building the docker.<br>
+The script runs in an Debian docker (light), the dependencies are installed when building the docker.<br>
 A volume (data) is mounted on the host, this volume points to the root folder where the .mkv files are located.<br>
 It will then retrieve the paths of all the .mvk files, and it will search file by file for subtitle files in a format other than format other than .srt<br>
 It will convert them and multiplex the result.
