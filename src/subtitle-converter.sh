@@ -162,7 +162,7 @@ Main(){
 }
 
 # Set vars
-tmp_folder="./sc_tmp"
+tmp_folder="/var/tmp"
 
 # Read settings file
 pref_language=$(grep '^\s*pref_language=' settings.ini | cut -d'=' -f2)
