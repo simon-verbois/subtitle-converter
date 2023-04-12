@@ -6,6 +6,6 @@ RUN python3 -m pip install langdetect
 RUN mkdir /var/tmp
 
 COPY ./src/subtitle-converter.sh /
-COPY ./config/settings.ini /
+COPY ./src/settings.ini /
 
 CMD ["/bin/bash", "/subtitle-converter.sh"]
