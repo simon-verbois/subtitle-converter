@@ -165,8 +165,8 @@ Main(){
 tmp_folder="./sc_tmp"
 
 # Read settings file
-pref_language=$(grep '^\s*pref_language=' config/settings.ini | cut -d'=' -f2)
-pref_language_full=$(grep '^\s*pref_language_full=' config/settings.ini | cut -d'=' -f2)
-debug=$(grep '^\s*debug=' config/settings.ini | cut -d'=' -f2)
+pref_language=$(grep '^\s*pref_language=' settings.ini | cut -d'=' -f2)
+pref_language_full=$(grep '^\s*pref_language_full=' settings.ini | cut -d'=' -f2)
+debug=$(grep '^\s*debug=' settings.ini | cut -d'=' -f2)
 
 Main
