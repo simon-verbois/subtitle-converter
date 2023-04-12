@@ -34,8 +34,7 @@ docker-compose up -d
 
 # Testing
 To test the script on your computer directly, you need to install the dependencies in the following point.<br>
-And create a data and sc_tmp folder at the root of the project (already in the .gitignore).<br>
-You can then run the script in /src
+And create a <b>./data</b> and <b>/var/tmp</b> folders.<br>
 
 <br>
 
