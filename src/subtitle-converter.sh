@@ -145,11 +145,11 @@ Main(){
     last_run=$(cat "$lockfile" 2>/dev/null || echo "never")
     current_date=$(date +%Y-%m-%d)
 
-    if [[ "$last_run" != "$current_date" ]]; then
+    if [[ "$last_run" == "$current_date" ]]; then
         Logger "(INFO) Already executed today. Waiting for tomorrow (next check in 3h)"
         sleep 10800
     else
-        if [[ $(date +%H) != 11 ]]; then
+        if [[ $(date +%H) == 11 ]]; then
             Logger "(INFO) Start scanning files"
             echo "$current_date" > "$lockfile"
             ScanFolders
