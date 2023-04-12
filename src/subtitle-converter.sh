@@ -124,6 +124,7 @@ ScanFolders(){
     IFS=$'\n'
     for mkv_file in $mkv_files; do
         ExtractSubtitles
+        Logger "(INFO) Complete : $mkv_file"
     done
 
     Logger "(INFO) Everythings is done"
