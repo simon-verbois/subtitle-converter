@@ -9,4 +9,7 @@ RUN mkdir -p /var/opt/subtitle-converter
 COPY ./src/subtitle-converter.sh /
 COPY ./src/_settings.ini /var/opt/subtitle-converter/settings.ini 
 
+ENV SC_TMP /var/tmp/subtitle-converter
+ENV SC_SETTINGS_FILE /var/opt/subtitle-converter/settings.ini
+
 CMD ["/bin/bash", "/subtitle-converter.sh"]
