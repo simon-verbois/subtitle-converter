@@ -3,11 +3,11 @@
 ConvertSubtitles(){
     if [[ "$format" == "pgs" ]]; then
         # convert .sub to .srt
-        #rm -f $tmp_folder/$filename-$cleaned_track_id.sup
+        #rm -f $SC_TMP/$filename-$cleaned_track_id.sup
         echo > /dev/null
     else
-        ffmpeg -loglevel 0 -i $tmp_folder/$filename-$cleaned_track_id.shit -y -f srt $tmp_folder/$filename-$cleaned_track_id.srt
-        rm -f $tmp_folder/$filename-$cleaned_track_id.shit
+        ffmpeg -loglevel 0 -i $SC_TMP/$filename-$cleaned_track_id.shit -y -f srt $SC_TMP/$filename-$cleaned_track_id.srt
+        rm -f $SC_TMP/$filename-$cleaned_track_id.shit
     fi
 }
 
@@ -16,7 +16,7 @@ CleanFile(){
 }
 
 AddSubtitles(){
-    srt_files=$(find $tmp_folder -name "$filename*.srt" -type f)
+    srt_files=$(find $SC_TMP -name "$filename*.srt" -type f)
     IFS=$'\n'
     for srt_file in $srt_files; do
         ID=$(echo $srt_file | rev | cut -d'-' -f 1 | rev | cut -d'.' -f 1)
@@ -99,10 +99,10 @@ ExtractSubtitles(){
             cleaned_track_id=$(echo $track | awk '{print $3}' | sed 's/://g')
             if [[ "$format" == "pgs" ]]; then
                 # Extract .sup file (PGS)
-                #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$cleaned_track_id -scodec copy $tmp_folder/$filename-$cleaned_track_id.sup
+                #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$cleaned_track_id -scodec copy $SC_TMP/$filename-$cleaned_track_id.sup
                 echo > /dev/null
             else
-                mkvextract tracks "$mkv_file" $cleaned_track_id:$tmp_folder/$filename-$cleaned_track_id.shit > /dev/null
+                mkvextract tracks "$mkv_file" $cleaned_track_id:$SC_TMP/$filename-$cleaned_track_id.shit > /dev/null
             fi
             ConvertSubtitles
         done
@@ -142,7 +142,7 @@ Logger() {
 
 
 Main(){
-    lockfile="$tmp_folder/subtitle-converter.lock"
+    lockfile="$SC_TMP/subtitle-converter.lock"
     last_run=$(cat "$lockfile" 2>/dev/null || echo "never")
     current_date=$(date +%Y-%m-%d)
 
@@ -162,13 +162,9 @@ Main(){
     fi
 }
 
-# Set vars
-tmp_folder="/var/tmp/subtitle-converter"
-settings_file="/var/opt/subtitle-converter/settings.ini"
-
 # Read settings file
-pref_language=$(grep '^\s*pref_language=' $settings_file | cut -d'=' -f2)
-pref_language_full=$(grep '^\s*pref_language_full=' $settings_file | cut -d'=' -f2)
-debug=$(grep '^\s*debug=' $settings_file | cut -d'=' -f2)
+pref_language=$(grep '^\s*pref_language=' $SC_SETTINGS_FILE | cut -d'=' -f2)
+pref_language_full=$(grep '^\s*pref_language_full=' $SC_SETTINGS_FILE | cut -d'=' -f2)
+debug=$(grep '^\s*debug=' $SC_SETTINGS_FILE | cut -d'=' -f2)
 
 Main
