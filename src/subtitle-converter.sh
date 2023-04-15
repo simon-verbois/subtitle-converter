@@ -163,11 +163,12 @@ Main(){
 }
 
 # Set vars
-tmp_folder="/var/tmp"
+tmp_folder="/var/tmp/subtitle-converter"
+settings_file="/var/opt/subtitle-converter/settings.ini"
 
 # Read settings file
-pref_language=$(grep '^\s*pref_language=' settings.ini | cut -d'=' -f2)
-pref_language_full=$(grep '^\s*pref_language_full=' settings.ini | cut -d'=' -f2)
-debug=$(grep '^\s*debug=' settings.ini | cut -d'=' -f2)
+pref_language=$(grep '^\s*pref_language=' $settings_file | cut -d'=' -f2)
+pref_language_full=$(grep '^\s*pref_language_full=' $settings_file | cut -d'=' -f2)
+debug=$(grep '^\s*debug=' $settings_file | cut -d'=' -f2)
 
 Main
