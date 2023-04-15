@@ -35,15 +35,16 @@ AddSubtitles() {
         fi
         
         content=$(cat "$srt_file" | awk '{gsub(/<[^>]*>/,"")};1' | awk '!/^[0-9]+$/ && !/^[0-9]+:[0-9]+:[0-9]+,[0-9]+ --> [0-9]+:[0-9]+:[0-9]+,[0-9]+$/' | awk '{gsub(/{.*}/,"")};1' | sed '/^$/d')
-        langue=$(echo "$content" | python3 -c "from langdetect import detect; import sys; print(detect(sys.stdin.read()))")
+        detected_language=$(echo "$content" | python3 -c "from langdetect import detect; import sys; print(detect(sys.stdin.read()))")
 
-        if [[ "$langue" != "$SC_PREF_LANG" ]]; then
-            Logger "(DEBUG) Remove $srt_file ($langue) from $filename" "debug"
+        if [[ "$detected_language" != "$SC_PREF_LANG" ]]; then
+            Logger "(DEBUG) Remove $srt_file ($detected_language) from $filename" "debug"
         else
-            Logger "(DEBUG) Add $srt_file ($langue) to $filename" "debug"
+            Logger "(DEBUG) Add $srt_file ($detected_language) to $filename" "debug"
             mkvmerge -q -o "$mkv_file-sub.mkv" "$mkv_file-new.mkv" --language 0:$language --sub-charset 0:UTF-8 --track-name 0:"$name" "$srt_file"
             mv -f "$mkv_file-sub.mkv" "$mkv_file-new.mkv"
         fi
+        
         rm -f $srt_file
     done
 }
@@ -68,11 +69,7 @@ GetTracksInfo() {
             break
         fi
         
-        if [[ "$language" != *"$SC_PREF_LANG"* ]]; then
-            to_clean="true"
-            break
-        fi
-        if [[ -z "$language" ]]; then
+        if [[ "$language" != *"$SC_PREF_LANG"* || -z "$language" ]]; then
             to_clean="true"
             break
         fi
@@ -136,13 +133,12 @@ ExtractSubtitles() {
         ConvertSubtitles
     done
 
-    Logger "(DEBUG) Cleaning old subtitles tracks : $filename" "debug"
+    Logger "(DEBUG) Cleaning old subtitles : $filename" "debug"
     CleanFile
 
-    Logger "(DEBUG) Add new subtitles : $filename" "debug"
+    Logger "(DEBUG) Add converted subtitles : $filename" "debug"
     AddSubtitles
-
-    Logger "(DEBUG) Replace old file : $filename" "debug"
+    
     mv "$mkv_file-new.mkv" "$mkv_file"
 }
 
@@ -157,6 +153,7 @@ ScanFolders() {
 
     Logger "(INFO) Everythings is done"
     printf '%s\n' '------------------------------------'
+    
     Main
 }
 
