@@ -13,19 +13,17 @@ It will convert them and multiplex the result.
 <br>
 
 # How to use it
-Just clone this repo.
+Clone this repository.
 ```
 git clone https://github.com/simon-verbois/subtitle-converter.git
 ```
 
-Then, change the path in the `docker-compose.yml` file to add your path from where your 
-add your path to where your .mkv files are and finish by building the 
-docker.
+Modify the `docker-compose.yml` file, include the path of the folder where your .mkv files are located, and proceed to build the docker.
 ```
 docker-compose build
 ```
 
-And run it.
+Then, run it.
 ```
 docker-compose up -d
 ```
@@ -34,7 +32,7 @@ docker-compose up -d
 
 # Testing
 To test the script on your computer directly, you need to install the dependencies in the following point.<br>
-And create a <b>./data</b> and <b>/var/tmp</b> folders.<br>
+And create a <b>./data</b> and <b>/var/tmp/subtitle-converter</b> folders.<br>
 
 <br>
 
