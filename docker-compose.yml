@@ -1,7 +1,9 @@
-version: '3'
+version: '3.7'
+
 services:
   subtitle-converter:
     container_name: subtitle-converter
+    restart: unless-stopped
     build: .
     volumes:
-      - ./data:/data
+      - "./data:/data:rw"
