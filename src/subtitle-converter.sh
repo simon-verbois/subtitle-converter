@@ -2,14 +2,15 @@
 
 
 ConvertSubtitles() {
-    if [[ "$format" == "pgs" ]]; then
-        # convert .sub to .srt
-        #rm -f $tmp_file.$ext
+    if [[ "$track" =~ "S_HDMV/PGS" ]]; then
+        echo > /dev/null
+    elif [[ "$track" =~ "S_VOBSUB" ]]; then
         echo > /dev/null
     else
-        ffmpeg -loglevel 0 -i $tmp_file.$ext -y -f srt $tmp_file.srt
-        rm -f $tmp_file.$ext
+        ffmpeg -loglevel 0 -i $tmp_file -y -f srt $tmp_file.srt
     fi
+    
+    rm -f $tmp_file
 }
 
 
@@ -22,30 +23,28 @@ AddSubtitles() {
     srt_files=$(find $SC_TMP -name "$filename*.srt" -type f)
     IFS=$'\n'
     for srt_file in $srt_files; do
-        ID=$(echo $srt_file | rev | cut -d'-' -f 1 | rev | cut -d'.' -f 1)
-        language=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $ID)" -A 11 | grep "Language:" | awk '{print $4}')
-        name=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $ID)" -A 11 | sed -n 's/.*Name: \(.*\)/\1/p')
+        track_id=$(echo $srt_file | rev | cut -d'-' -f 1 | rev | cut -d'.' -f 1)
+        language=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $track_id)" -A 11 | grep "Language:" | awk '{print $4}')
+        name=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $track_id)" -A 11 | sed -n 's/.*Name: \(.*\)/\1/p')
 
         if [[ -z "$language" ]]; then
-            language="$pref_language"
+            language="$SC_PREF_LANG"
         fi
         if [[ -z "$name" ]]; then
-            name="$pref_language_full"
+            name="$SC_PREF_LANG_FULL"
         fi
         
         content=$(cat "$srt_file" | awk '{gsub(/<[^>]*>/,"")};1' | awk '!/^[0-9]+$/ && !/^[0-9]+:[0-9]+:[0-9]+,[0-9]+ --> [0-9]+:[0-9]+:[0-9]+,[0-9]+$/' | awk '{gsub(/{.*}/,"")};1' | sed '/^$/d')
         langue=$(echo "$content" | python3 -c "from langdetect import detect; import sys; print(detect(sys.stdin.read()))")
 
-        if [[ "$langue" != "$pref_language" ]]; then
-            Logger "(DEBUG) Remove $srt_file because language is $langue" "debug"
-            rm -f $srt_file
+        if [[ "$langue" != "$SC_PREF_LANG" ]]; then
+            Logger "(DEBUG) Remove $srt_file ($langue) from $filename" "debug"
         else
-            Logger "(DEBUG) Add $srt_file ($langue) to $mkv_file-sub.mkv" "debug"
+            Logger "(DEBUG) Add $srt_file ($langue) to $filename" "debug"
             mkvmerge -q -o "$mkv_file-sub.mkv" "$mkv_file-new.mkv" --language 0:$language --sub-charset 0:UTF-8 --track-name 0:"$name" "$srt_file"
-
             mv -f "$mkv_file-sub.mkv" "$mkv_file-new.mkv"
-            rm -f $srt_file
         fi
+        rm -f $srt_file
     done
 }
 
@@ -69,7 +68,7 @@ GetTracksInfo() {
             break
         fi
         
-        if [[ "$language" != *"$pref_language"* ]]; then
+        if [[ "$language" != *"$SC_PREF_LANG"* ]]; then
             to_clean="true"
             break
         fi
@@ -79,53 +78,59 @@ GetTracksInfo() {
         fi
         
         if [[ "$track" =~ "S_TEXT/UTF8" ]]; then
-            ext="srt"
-            to_clean="true"
-            break
+            continue
         elif [[ "$track" =~ "S_TEXT/ASS" ]]; then
-            ext="ssa"
             to_clean="true"
             break
         elif [[ "$track" =~ "S_TEXT/USF" ]]; then
-            ext="usf"
             to_clean="true"
             break
         elif [[ "$track" =~ "S_VOBSUB" ]]; then
-            ext="sub"
             reason="S_VOBSUB detected"
             break
         elif [[ "$track" =~ "S_HDMV/PGS" ]]; then
-            ext="sup"
             reason="S_HDMV/PGS detected"
             break
         fi
     done
     
     if [[ "$to_clean" == "true" ]]; then
-        Logger "(INFO) Start converting subtitles of : $filename"
-        ExtractSubtitle
+        Logger "(INFO) Start converting subtitles : $filename"
+        ExtractSubtitles
     else
         Logger "(DEBUG) Skip : $filename ($reason)" "debug"
     fi
 }
 
 
-ExtractSubtitle() {
+ExtractSubtitles() {
     for track in $tracks; do
-        #if [[ ! "$track" =~ "S_HDMV/PGS" && ! "$track" =~ "S_VOBSUB" ]]; then
-        #    #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$track_id -scodec copy $SC_TMP/$filename-$track_id.sup
-        #    echo > /dev/null
-        #elif [[ ! "$track" =~ "S_HDMV/PGS" && ! "$track" =~ "S_VOBSUB" ]]; then
-        #    #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$track_id -scodec copy $SC_TMP/$filename-$track_id.sup
-        #    echo > /dev/null
+        track_id=$(echo "$track" | awk '{print $3}' | tr -d ":")
+        
+        if [[ "$track" =~ "S_TEXT/UTF8" ]]; then
+            ext="srt"
+        elif [[ "$track" =~ "S_TEXT/ASS" ]]; then
+            ext="ssa"
+        elif [[ "$track" =~ "S_TEXT/USF" ]]; then
+            ext="usf"
+        elif [[ "$track" =~ "S_HDMV/PGS" ]]; then
+            ext="sup"
+        elif [[ "$track" =~ "S_VOBSUB" ]]; then
+            ext="sub"
+        fi
+        
+        tmp_file="$SC_TMP/$filename-$track_id.$ext"
+        
+        #if [[ "$track" =~ "S_HDMV/PGS" ]]; then
+        #    #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$track_id -scodec copy $tmp_file
+        #elif [[ "$track" =~ "S_VOBSUB" ]]; then
+        #    #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$track_id -scodec copy $tmp_file
         #else
-        #    mkvextract tracks "$mkv_file" $track_id:$SC_TMP/$filename-$track_id.$ext > /dev/null
+        #    mkvextract tracks "$mkv_file" $track_id:$tmp_file > /dev/null
         #fi
         
-        tmp_file="$SC_TMP/$filename-$track_id"
-        
         Logger "(DEBUG) Extract track : $track_id" "debug"
-        mkvextract tracks "$mkv_file" "$track_id:$tmp_file.$ext" > /dev/null
+        mkvextract tracks "$mkv_file" "$track_id:$tmp_file" > /dev/null
         
         Logger "(DEBUG) Convert track : $track_id" "debug"
         ConvertSubtitles
@@ -159,7 +164,7 @@ ScanFolders() {
 Logger() {
     local -r log_date="[$(date +'%d-%m-%Y|%H:%M:%S')]"
 
-    if [[ "$2" != "debug" || "$debug" == "True" ]]; then
+    if [[ "$2" != "debug" || "$SC_DEBUG" == "True" ]]; then
         printf '%s\n' "$log_date $1"
     fi
 }
@@ -185,11 +190,6 @@ Main() {
         fi
     fi
 }
-
-
-pref_language=$(grep '^\s*pref_language=' $SC_SETTINGS_FILE | cut -d'=' -f2)
-pref_language_full=$(grep '^\s*pref_language_full=' $SC_SETTINGS_FILE | cut -d'=' -f2)
-debug=$(grep '^\s*debug=' $SC_SETTINGS_FILE | cut -d'=' -f2)
 
 
 Main
