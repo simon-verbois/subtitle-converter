@@ -1,27 +1,30 @@
 #!/bin/bash
 
-ConvertSubtitles(){
+
+ConvertSubtitles() {
     if [[ "$format" == "pgs" ]]; then
         # convert .sub to .srt
-        #rm -f $SC_TMP/$filename-$cleaned_track_id.sup
+        #rm -f $tmp_file.$ext
         echo > /dev/null
     else
-        ffmpeg -loglevel 0 -i $SC_TMP/$filename-$cleaned_track_id.shit -y -f srt $SC_TMP/$filename-$cleaned_track_id.srt
-        rm -f $SC_TMP/$filename-$cleaned_track_id.shit
+        ffmpeg -loglevel 0 -i $tmp_file.$ext -y -f srt $tmp_file.srt
+        rm -f $tmp_file.$ext
     fi
 }
 
-CleanFile(){
+
+CleanFile() {
     mkvmerge -q -o $mkv_file-new.mkv --no-subtitles $mkv_file
 }
 
-AddSubtitles(){
+
+AddSubtitles() {
     srt_files=$(find $SC_TMP -name "$filename*.srt" -type f)
     IFS=$'\n'
     for srt_file in $srt_files; do
         ID=$(echo $srt_file | rev | cut -d'-' -f 1 | rev | cut -d'.' -f 1)
-        language=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $ID)" -A 10 | grep "Language:" | awk '{print $4}')
-        name=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $ID)" -A 10 | sed -n 's/.*Name: \(.*\)/\1/p')
+        language=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $ID)" -A 11 | grep "Language:" | awk '{print $4}')
+        name=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $ID)" -A 11 | sed -n 's/.*Name: \(.*\)/\1/p')
 
         if [[ -z "$language" ]]; then
             language="$pref_language"
@@ -46,84 +49,104 @@ AddSubtitles(){
     done
 }
 
-ExtractSubtitles(){
+
+GetTracksInfo() {
     filename=$(basename -s .mvk "$mkv_file")
     tracks=""
     tracks=$(mkvmerge -i "$mkv_file" | grep "subtitles")
 
-    toclean="false"
-    reason="Already cleaned"
     IFS=$'\n'
     for track in $tracks; do
-        # Get track information
-        ID=$(echo "$track" | awk '{print $3}' | tr -d ":")
-        language=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $ID)" -A 10 | grep "Language:" | awk '{print $4}')
-        language_forced=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $ID)" -A 10 | grep -i "forced" | grep -v -i "name")
-
-        if [[ "$track" == *"PGS"* ]]; then
-            # Skip PGS (not yet supported)
-            toclean="false"
-            reason="PGS detected"
-            format="pgs"
-            break
-        fi
+        ext=""
+        to_clean="false"
+        reason="Already cleaned"
+        track_id=$(echo "$track" | awk '{print $3}' | tr -d ":")
+        language=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $track_id)" -A 10 | grep "Language:" | awk '{print $4}')
+        #language_forced=$(mkvinfo $mkv_file | grep "(track ID for mkvmerge & mkvextract: $track_id)" -A 10 | grep -i "forced" | grep -v -i "name")
+        
         if [[ -z "$track" ]]; then
-            # Skip file without subtitle
-            toclean="false"
-            reason="No subtitles"
+            reason="No subtitles detected"
             break
         fi
-        if [[ "$track" != *"SRT"* ]]; then
-            # Go if contains at least one track other than srt
-            toclean="true"
-            format="good"
-            break
-        fi
+        
         if [[ "$language" != *"$pref_language"* ]]; then
-            # Go if contains a subtitle track other than the pref language
-            toclean="true"
-            format="good"
+            to_clean="true"
             break
         fi
         if [[ -z "$language" ]]; then
-            # Go if contains a subtitle track without language metadata
-            toclean="true"
-            format="good"
+            to_clean="true"
+            break
+        fi
+        
+        if [[ "$track" =~ "S_TEXT/UTF8" ]]; then
+            ext="srt"
+            to_clean="true"
+            break
+        elif [[ "$track" =~ "S_TEXT/ASS" ]]; then
+            ext="ssa"
+            to_clean="true"
+            break
+        elif [[ "$track" =~ "S_TEXT/USF" ]]; then
+            ext="usf"
+            to_clean="true"
+            break
+        elif [[ "$track" =~ "S_VOBSUB" ]]; then
+            ext="sub"
+            reason="S_VOBSUB detected"
+            break
+        elif [[ "$track" =~ "S_HDMV/PGS" ]]; then
+            ext="sup"
+            reason="S_HDMV/PGS detected"
             break
         fi
     done
-
-    if [[ "$toclean" == "true" ]]; then
-        Logger "(INFO) Start converting subtitles for : $mkv_file"
-        for track in $tracks; do
-            cleaned_track_id=$(echo $track | awk '{print $3}' | sed 's/://g')
-            if [[ "$format" == "pgs" ]]; then
-                # Extract .sup file (PGS)
-                #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$cleaned_track_id -scodec copy $SC_TMP/$filename-$cleaned_track_id.sup
-                echo > /dev/null
-            else
-                mkvextract tracks "$mkv_file" $cleaned_track_id:$SC_TMP/$filename-$cleaned_track_id.shit > /dev/null
-            fi
-            ConvertSubtitles
-        done
-
-        Logger "(INFO) Cleaning old subtitles tracks for : $mkv_file"
-        CleanFile
-
-        Logger "(INFO) Adding subtitles to : $mkv_file"
-        AddSubtitles
-
-        mv "$mkv_file-new.mkv" "$mkv_file"
+    
+    if [[ "$to_clean" == "true" ]]; then
+        Logger "(INFO) Start converting subtitles of : $filename"
+        ExtractSubtitle
     else
         Logger "(DEBUG) Skip : $filename ($reason)" "debug"
     fi
 }
 
-ScanFolders(){
+
+ExtractSubtitle() {
+    for track in $tracks; do
+        #if [[ ! "$track" =~ "S_HDMV/PGS" && ! "$track" =~ "S_VOBSUB" ]]; then
+        #    #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$track_id -scodec copy $SC_TMP/$filename-$track_id.sup
+        #    echo > /dev/null
+        #elif [[ ! "$track" =~ "S_HDMV/PGS" && ! "$track" =~ "S_VOBSUB" ]]; then
+        #    #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$track_id -scodec copy $SC_TMP/$filename-$track_id.sup
+        #    echo > /dev/null
+        #else
+        #    mkvextract tracks "$mkv_file" $track_id:$SC_TMP/$filename-$track_id.$ext > /dev/null
+        #fi
+        
+        tmp_file="$SC_TMP/$filename-$track_id"
+        
+        Logger "(DEBUG) Extract track : $track_id" "debug"
+        mkvextract tracks "$mkv_file" "$track_id:$tmp_file.$ext" > /dev/null
+        
+        Logger "(DEBUG) Convert track : $track_id" "debug"
+        ConvertSubtitles
+    done
+
+    Logger "(DEBUG) Cleaning old subtitles tracks : $filename" "debug"
+    CleanFile
+
+    Logger "(DEBUG) Add new subtitles : $filename" "debug"
+    AddSubtitles
+
+    Logger "(DEBUG) Replace old file : $filename" "debug"
+    mv "$mkv_file-new.mkv" "$mkv_file"
+}
+
+
+ScanFolders() {
     mkv_files=$(find "./data" -name "*.mkv" -type f)
     IFS=$'\n'
     for mkv_file in $mkv_files; do
-        ExtractSubtitles
+        GetTracksInfo
         Logger "(INFO) Complete : $mkv_file"
     done
 
@@ -131,6 +154,7 @@ ScanFolders(){
     printf '%s\n' '------------------------------------'
     Main
 }
+
 
 Logger() {
     local -r log_date="[$(date +'%d-%m-%Y|%H:%M:%S')]"
@@ -141,7 +165,7 @@ Logger() {
 }
 
 
-Main(){
+Main() {
     lockfile="$SC_TMP/subtitle-converter.lock"
     last_run=$(cat "$lockfile" 2>/dev/null || echo "never")
     current_date=$(date +%Y-%m-%d)
@@ -162,9 +186,10 @@ Main(){
     fi
 }
 
-# Read settings file
+
 pref_language=$(grep '^\s*pref_language=' $SC_SETTINGS_FILE | cut -d'=' -f2)
 pref_language_full=$(grep '^\s*pref_language_full=' $SC_SETTINGS_FILE | cut -d'=' -f2)
 debug=$(grep '^\s*debug=' $SC_SETTINGS_FILE | cut -d'=' -f2)
+
 
 Main
