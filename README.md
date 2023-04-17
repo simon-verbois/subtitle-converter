@@ -17,7 +17,7 @@ It will convert them and multiplex the result.
 - [x] ASS
 - [x] SRT
 - [x] USF
-- [ ] SUP (PGS)
+- [ ] SUP
 - [ ] SUB
 
 <br>
