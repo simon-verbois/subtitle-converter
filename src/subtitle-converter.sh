@@ -118,14 +118,6 @@ ExtractSubtitles() {
         
         tmp_file="$SC_TMP/$filename-$track_id.$ext"
         
-        #if [[ "$track" =~ "S_HDMV/PGS" ]]; then
-        #    #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$track_id -scodec copy $tmp_file
-        #elif [[ "$track" =~ "S_VOBSUB" ]]; then
-        #    #ffmpeg -loglevel 0 -i "$mkv_file" -map 0:s:$track_id -scodec copy $tmp_file
-        #else
-        #    mkvextract tracks "$mkv_file" $track_id:$tmp_file > /dev/null
-        #fi
-        
         Logger "(DEBUG) Extract track : $track_id" "debug"
         mkvextract tracks "$mkv_file" "$track_id:$tmp_file" > /dev/null
         
