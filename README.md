@@ -13,6 +13,15 @@ It will convert them and multiplex the result.
 
 <br>
 
+# Actual capabilities
+- [x] ASS
+- [x] SRT
+- [x] USF
+- [ ] SUP (PGS)
+- [ ] SUB
+
+<br>
+
 # How to use it
 Clone this repository.
 ```
