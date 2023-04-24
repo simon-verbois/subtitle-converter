@@ -178,7 +178,7 @@ Main() {
         Logger "(INFO) Already executed today. Waiting for tomorrow (next check in 3h)"
         sleep 10800
     else
-        if [[ $(date +%H) == 11 ]]; then
+        if [[ $(date +%H) != 11 ]]; then
             Logger "(INFO) Start scanning files"
             echo "$current_date" > "$lockfile"
             ScanFolders
