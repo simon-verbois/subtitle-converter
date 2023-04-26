@@ -107,7 +107,7 @@ ExtractSubtitles() {
     Logger "(DEBUG) Add converted subtitles : $filename" "debug"
     AddSubtitles
     
-    mv "$mkv_file-new.mkv" "$mkv_file"
+    mv "$mkv_file-tmp.mkv" "$mkv_file"
 }
 
 
@@ -125,7 +125,7 @@ ConvertSubtitles() {
 
 
 CleanFile() {
-    mkvmerge -q -o $mkv_file-new.mkv --no-subtitles $mkv_file
+    mkvmerge -q -o $mkv_file-tmp.mkv --no-subtitles $mkv_file
 }
 
 
@@ -151,8 +151,8 @@ AddSubtitles() {
             Logger "(DEBUG) Delete $srt_file ($detected_language)" "debug"
         else
             Logger "(DEBUG) Add $srt_file ($detected_language)" "debug"
-            mkvmerge -q -o "$mkv_file-sub.mkv" "$mkv_file-new.mkv" --language 0:$language --sub-charset 0:UTF-8 --track-name 0:"$name" "$srt_file"
-            mv -f "$mkv_file-sub.mkv" "$mkv_file-new.mkv"
+            mkvmerge -q -o "$mkv_file-sub.mkv" "$mkv_file-tmp.mkv" --language 0:$language --sub-charset 0:UTF-8 --track-name 0:"$name" "$srt_file"
+            mv -f "$mkv_file-sub.mkv" "$mkv_file-tmp.mkv"
         fi
         
         rm -f $srt_file
