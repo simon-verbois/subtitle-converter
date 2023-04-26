@@ -1,7 +1,7 @@
 # Introduction
 Subtitle-converter is a project to improve the compatibility of subtitle files present in .MKV (Matroska) files.<br>
 It will convert files of different formats to .SRT, in order to allow the application to change the formatting of these files at the last level (player).<br>
-This script has been created to work with <a href="https://www.filebot.net/" target="_blank">filebot</a> (for PGS and VOSUB only, it is independent on text formats).<br>
+This script has been created to work with <a href="https://www.filebot.net/" target="_blank">filebot</a> (for PGS and VOSUB only).<br>
 Furthermore, the conversion of subtitle files (SUP and SUB) to SRT format saves a lot of storage (+-25MB -> 100kb, depending on the file).
 
 <br>
