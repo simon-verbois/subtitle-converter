@@ -1,6 +1,7 @@
 # Introduction
 Subtitle-converter is a project to improve the compatibility of subtitle files present in .MKV (Matroska) files.<br>
 It will convert files of different formats to .SRT, in order to allow the application to change the formatting of these files at the last level (player).<br>
+This script has been created to work with <a href="https://www.filebot.net/" target="_blank">filebot</a> (for PGS and VOSUB only, it is independent on text formats).<br>
 Furthermore, the conversion of subtitle files (SUP and SUB) to SRT format saves a lot of storage (+-25MB -> 100kb, depending on the file).
 
 <br>
@@ -28,14 +29,10 @@ Clone this repository.
 git clone https://github.com/simon-verbois/subtitle-converter.git
 ```
 
-Modify the `docker-compose.yml` file, include the path of the folder where your .mkv files are located, and proceed to build the docker.
+Custom `docker-compose.yml` and `.env` files, include the path of the folder where your .mkv files are located, and proceed to build the docker.
+Build, then start the container.
 ```
-docker-compose build
-```
-
-Then, run it.
-```
-docker-compose up -d
+docker-compose up --build -d
 ```
 
 <br>
