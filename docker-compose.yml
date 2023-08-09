@@ -5,6 +5,6 @@ services:
     container_name: subtitle-converter
     restart: always
     env_file: .env
-    build: .
+    build: ./build/.
     volumes:
       - "./data:/data:rw"
