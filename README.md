@@ -48,3 +48,7 @@ ffmpeg<br>
 mkvtoolnix<br>
 python3<br>
 python3-langdetect
+
+
+## Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=usememos/memos&type=Date)](https://star-history.com/#usememos/memos&Date)
